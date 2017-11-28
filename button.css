@@ -41,3 +41,12 @@
     position: relative;
     top: 1px;
 }
+
+.wrapper {
+    text-align: center;
+}
+
+.publisher {
+    position: absolute;
+    top: 50%;
+}
