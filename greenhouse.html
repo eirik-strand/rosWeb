@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - STL</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<style>
+			body {
+				font-family: Monospace;
+				background-color: #000000;
+				margin: 0px;
+				overflow: hidden;
+			}
+
+			#info {
+				color: #fff;
+				position: absolute;
+				top: 10px;
+				width: 100%;
+				text-align: center;
+				z-index: 100;
+				display:block;
+
+			}
+
+			a { color: skyblue }
+			.button { background:#999; color:#eee; padding:0.2em 0.5em; cursor:pointer }
+			.highlight { background:orange; color:#fff; }
+
+			span {
+				display: inline-block;
+				width: 60px;
+				float: left;
+				text-align: center;
+			}
+
+		</style>
+	</head>
+	<body>
+		<div id="info">
+			Garden interface
+		</div>
+
+		<script src="three.js/build/three.js"></script>
+
+		<script src="three.js/examples/js/loaders/STLLoader.js"></script>
+
+		<script src="three.js/examples/js/Detector.js"></script>
+		<script src="three.js/examples/js/libs/stats.min.js"></script>
+
+		<script>
+
+			if ( ! Detector.webgl ) Detector.addGetWebGLMessage();
+
+			var container, stats;
+
+			var camera, cameraTarget, scene, renderer;
+
+			init();
+			animate();
+
+			function init() {
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 15 );
+				camera.position.set( 4, 1, 3 );
+
+				cameraTarget = new THREE.Vector3( 0, 0,0 );
+
+				scene = new THREE.Scene();
+				scene.background = new THREE.Color( 0x00000 );
+				scene.fog = new THREE.Fog( 0x72645b, 2, 15 );
+
+
+				// Ground
+
+				var plane = new THREE.Mesh(
+					new THREE.PlaneBufferGeometry( 40, 40 ),
+					new THREE.MeshPhongMaterial( { color: 0x00000, specular: 0x00000} )
+				);
+				plane.rotation.x = -Math.PI/2;
+				plane.position.y = -0.5;
+				//scene.add( plane );
+
+				//plane.receiveShadow = true;
+
+
+				// ASCII file
+
+				var loader = new THREE.STLLoader();
+				loader.load( 'meshes/plants.stl', function ( geometry ) {
+
+					var material = new THREE.MeshPhongMaterial( { color: 0x78934789, specular: 0x6E6E6E, shininess: 0 } );
+					var mesh = new THREE.Mesh( geometry, material );
+
+					mesh.position.set( 0, -0.3, 0 );
+					mesh.rotation.set( 3.1415/2, 3.1415, 0);
+					mesh.scale.set( 0.01, 0.01, 0.01 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+
+
+				loader.load( 'meshes/room.stl', function ( geometry ) {
+
+					var material = new THREE.MeshPhongMaterial( { color: 0x0B3B17, specular: 0x6E6E6E, shininess: 0 } );
+					var mesh = new THREE.Mesh( geometry, material );
+
+					mesh.position.set( 0, -0.3, 0 );
+					mesh.rotation.set( 3.1415/2, 3.1415, 0);
+					mesh.scale.set( 0.01, 0.01, 0.01 );
+
+					mesh.castShadow = true;
+					mesh.receiveShadow = true;
+
+					scene.add( mesh );
+
+				} );
+
+				var geometry = new THREE.CylinderGeometry(0.1, 0.1, 0.3, 20);
+
+    			
+      			var material = new THREE.MeshBasicMaterial({
+        		color: 0x3434234
+      			});
+
+
+  				var textlabels = [];
+
+				mesh = new THREE.Mesh(geometry, material);
+      			mesh.position.x =0;
+      			mesh.position.y = 0.2;
+      			mesh.position.z = 0;
+      			mesh.updateMatrix();
+      			mesh.matrixAutoUpdate = false;
+      			//scene.add(mesh);
+      
+      			var text = _createTextLabel();
+      			text.setHTML("HALLOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOWORKDKK");
+      			text.setParent(mesh);
+      			text.updatePosition();
+
+      			//scene.add(mesh);
+      			text.updatePosition();
+
+				// Lights
+
+				//scene.add( new THREE.HemisphereLight( 0x443333, 0x111122 ) );
+
+				 addShadowedLight( 1, 1, 1, 0xffffff, 1.35 );
+				 addShadowedLight( 0.5, 1, -1, 0xffaa00, 1 );
+				 //addShadowedLight( 0, 0.1, 0.2, 0xffaa00, 5 );
+				// renderer
+
+				renderer = new THREE.WebGLRenderer( { antialias: true } );
+				renderer.setPixelRatio( window.devicePixelRatio );
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+				renderer.gammaInput = true;
+				renderer.gammaOutput = true;
+
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.renderReverseSided = false;
+
+				container.appendChild( renderer.domElement );
+
+				// stats
+
+				stats = new Stats();
+				container.appendChild( stats.dom );
+
+				//
+
+				window.addEventListener( 'resize', onWindowResize, false );
+
+			}
+
+			function addShadowedLight( x, y, z, color, intensity ) {
+
+				var directionalLight = new THREE.DirectionalLight( color, intensity );
+				directionalLight.position.set( x, y, z );
+				scene.add( directionalLight );
+
+				directionalLight.castShadow = true;
+
+				var d = 1;
+				directionalLight.shadow.camera.left = -d;
+				directionalLight.shadow.camera.right = d;
+				directionalLight.shadow.camera.top = d;
+				directionalLight.shadow.camera.bottom = -d;
+
+				directionalLight.shadow.camera.near = 1;
+				directionalLight.shadow.camera.far = 4;
+
+				directionalLight.shadow.mapSize.width = 1024;
+				directionalLight.shadow.mapSize.height = 1024;
+
+				directionalLight.shadow.bias = -0.005;
+
+			}
+
+			function onWindowResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function animate() {
+
+				requestAnimationFrame( animate );
+
+				render();
+				stats.update();
+
+			}
+
+			function render() {
+
+				var timer = Date.now() * 0.0005;
+
+				camera.position.x = Math.cos( timer ) * 3;
+				camera.position.z = Math.sin( timer ) * 3;
+
+				camera.lookAt( cameraTarget );
+
+				renderer.render( scene, camera );
+
+			}
+
+			function _createTextLabel() {
+    			var div = document.createElement('div');
+			    div.className = 'text-label';
+			    div.style.position = 'absolute';
+			    div.style.width = 1;
+			    div.style.height = 1;
+			    div.innerHTML = "hi there!";
+			    div.style.top = -1;
+			    div.style.left = -1;
+			    
+			    var _this = this;
+			    
+			    return {
+			      element: div,
+			      parent: false,
+			      position: new THREE.Vector3(0,0, 0),
+			      setHTML: function(html) {
+			        this.element.innerHTML = html;
+			      },
+			      setParent: function(threejsobj) {
+			        this.parent = threejsobj;
+			      },
+			      updatePosition: function() {
+			        if(parent) {
+			          this.position.copy(this.parent.position);
+			        }
+			        
+			        var coords2d = this.get2DCoords(this.position, _this.camera);
+			        this.element.style.left = coords2d.x + 'px';
+			        this.element.style.top = coords2d.y + 'px';
+			      },
+			      get2DCoords: function(position, camera) {
+			        var vector = position.project(camera);
+			        vector.x = (vector.x + 1)/2 * window.innerWidth;
+			        vector.y = -(vector.y - 1)/2 * window.innerHeight;
+			        return vector;
+			      }
+			    };
+			}
+
+		</script>
+	</body>
+</html>
